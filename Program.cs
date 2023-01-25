@@ -113,6 +113,7 @@ namespace RevigoCSExample
 
 			// Start Workers and wait for their completion
 			// They will automatically be assigned to different CPU core, if available
+			Console.WriteLine("Starting Workers...");
 			oWorker1.Start();
 			oWorker2.Start();
 			oWorker3.Start();
@@ -122,7 +123,7 @@ namespace RevigoCSExample
 				Thread.Sleep(100);
 			}
 
-			Console.WriteLine("All Jobs have finished processing.");
+			Console.WriteLine("All Workers have finished processing.");
 
 			// export our results
 			Console.WriteLine("Exporting data.");
