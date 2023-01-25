@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("RevigoCSExample")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("IRB")]
 [assembly: AssemblyProduct("RevigoCSExample")]
-[assembly: AssemblyCopyright("Copyright ©  2023")]
+[assembly: AssemblyCopyright("Copyright © 2011-2023, Ruđer Bošković Institite")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
