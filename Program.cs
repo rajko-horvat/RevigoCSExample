@@ -17,7 +17,9 @@ namespace RevigoCSExample
 {
 
 	/// <summary>
-	/// An example of using a REVIGO core library for your own projects
+	/// An example of using a REVIGO core library for your own projects.
+	/// To Run this example you need RevigoCore library and a 
+	/// set of database files available at: http://revigo.irb.hr/RevigoDatabases.zip
 	/// 
 	/// Authors:
 	///		Rajko Horvat (rhorvat at irb.hr)
