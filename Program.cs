@@ -135,7 +135,7 @@ namespace RevigoCSExample
 			ExportWordClouds(oWorker1, "Example1_WordClouds.json");
 
 			// We are finished
-			Console.WriteLine("Press a key to exit");
+			Console.WriteLine("Press enter key to exit");
 			Console.ReadLine();
 		}
 
