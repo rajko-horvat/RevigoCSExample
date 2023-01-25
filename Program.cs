@@ -112,7 +112,7 @@ namespace RevigoCSExample
 			oWorker3.OnFinish += OWorker_OnFinish;
 
 			// Start Workers and wait for their completion
-			// They will automatically be assigned to different CPU core if available
+			// They will automatically be assigned to different CPU core, if available
 			oWorker1.Start();
 			oWorker2.Start();
 			oWorker3.Start();
