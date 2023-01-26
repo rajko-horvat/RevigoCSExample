@@ -1,7 +1,7 @@
 % An analysis of differentially expressed genes between breast cancer
 % patients with less than 5 years to metastases and at least five
 % years disease-free.
-% Data from: van‘t Veer et al., Nature 415, 530-536
+% Data from: van't Veer et al., Nature 415, 530-536
 %
 % The list of GO categories enriched with these genes was obtained
 % using GOrilla server (http://cbl-gorilla.cs.technion.ac.il/)
