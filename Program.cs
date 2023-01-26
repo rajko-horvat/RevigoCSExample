@@ -133,15 +133,15 @@ namespace RevigoCSExample
 			Console.ReadLine();
 		}
 
-		private static void ExportTable(GeneOntology ontology, RevigoWorker oWorker, TermListVisualizer visualizer, string fileName)
+		private static void ExportTable(GeneOntology ontology, RevigoWorker worker, TermListVisualizer visualizer, string fileName)
 		{
 			StreamWriter oWriter = new StreamWriter(fileName);
 
 			GOTermList oTerms = new GOTermList(visualizer.Terms);
-			oTerms.FindClustersAndSortByThem(ontology, oWorker.AllProperties, oWorker.CutOff);
+			oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
 
 			oWriter.Write("TermID\tName\tValue\t");
-			for (int c = 1; c < oWorker.MinNumColsPerGoTerm; c++)
+			for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 			{
 				oWriter.Write("UserValue_{0}\t", c - 1);
 			}
@@ -151,13 +151,13 @@ namespace RevigoCSExample
 			for (int i = 0; i < oTerms.Count; i++)
 			{
 				GOTerm oTerm = oTerms[i];
-				GOTermProperties oProperties = oWorker.AllProperties.GetValueByKey(oTerm.ID);
+				GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
 
 				oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
 				oWriter.Write("\"{0}\"\t", oTerm.Name);
 				oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
 
-				for (int c = 1; c < oWorker.MinNumColsPerGoTerm; c++)
+				for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 				{
 					oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
 				}
@@ -184,12 +184,12 @@ namespace RevigoCSExample
 			oWriter.Close();
 		}
 
-		private static void ExportScatterplot(GeneOntology ontology, RevigoWorker oWorker, TermListVisualizer visualizer, string fileName)
+		private static void ExportScatterplot(GeneOntology ontology, RevigoWorker worker, TermListVisualizer visualizer, string fileName)
 		{
 			StreamWriter oWriter = new StreamWriter(fileName);
 
 			GOTermList oTerms = new GOTermList(visualizer.Terms);
-			oTerms.FindClustersAndSortByThem(ontology, oWorker.AllProperties, oWorker.CutOff);
+			oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
 
 			oWriter.WriteLine("TermID\tName\tValue\tLogSize\tFrequency\tUniqueness\tDispensability\tPC_0\tPC_1\tRepresentative");
 
@@ -197,7 +197,7 @@ namespace RevigoCSExample
 			for (int i = 0; i < oTerms.Count; i++)
 			{
 				GOTerm oTerm = oTerms[i];
-				GOTermProperties oProperties = oWorker.AllProperties.GetValueByKey(oTerm.ID);
+				GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
 
 				oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
 				oWriter.Write("\"{0}\"\t", oTerm.Name);
@@ -231,12 +231,12 @@ namespace RevigoCSExample
 			oWriter.Close();
 		}
 
-		private static void ExportTreeMap(GeneOntology ontology, RevigoWorker oWorker, TermListVisualizer visualizer, string fileName)
+		private static void ExportTreeMap(GeneOntology ontology, RevigoWorker worker, TermListVisualizer visualizer, string fileName)
 		{
 			StreamWriter oWriter = new StreamWriter(fileName);
 
 			GOTermList terms = new GOTermList(visualizer.Terms);
-			terms.FindClustersAndSortByThem(ontology, oWorker.AllProperties, 0.1);
+			terms.FindClustersAndSortByThem(ontology, worker.AllProperties, 0.1);
 
 			oWriter.WriteLine("# WARNING - This exported Revigo data is only useful for the specific purpose of constructing a TreeMap visualization.");
 			oWriter.WriteLine("# Do not use this table as a general list of non-redundant GO categories, as it sets an extremely permissive ");
@@ -244,7 +244,7 @@ namespace RevigoCSExample
 			oWriter.WriteLine("# To export a reduced-redundancy set of GO terms, go to the Scatterplot or Table tab, and export from there.");
 
 			oWriter.Write("TermID\tName\tFrequency\tValue\t");
-			for (int c = 1; c < oWorker.MinNumColsPerGoTerm; c++)
+			for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 			{
 				oWriter.Write("UserValue_{0}\t", c - 1);
 			}
@@ -254,8 +254,8 @@ namespace RevigoCSExample
 			for (int i = 0; i < terms.Count; i++)
 			{
 				GOTerm curGOTerm = terms[i];
-				GOTermProperties oProperties = oWorker.AllProperties.GetValueByKey(curGOTerm.ID);
-				bool isTermEliminated = oProperties.Dispensability > oWorker.CutOff;
+				GOTermProperties oProperties = worker.AllProperties.GetValueByKey(curGOTerm.ID);
+				bool isTermEliminated = oProperties.Dispensability > worker.CutOff;
 				if (isTermEliminated)
 					continue; // will not output terms below the dispensability threshold at all
 
@@ -265,7 +265,7 @@ namespace RevigoCSExample
 
 				oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
 
-				for (int c = 1; c < oWorker.MinNumColsPerGoTerm; c++)
+				for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 				{
 					oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
 				}
@@ -317,12 +317,12 @@ namespace RevigoCSExample
 			oWriter.Close();
 		}
 
-		private static void ExportWordClouds(RevigoWorker oWorker, string fileName)
+		private static void ExportWordClouds(RevigoWorker worker, string fileName)
 		{
 			StreamWriter oWriter = new StreamWriter(fileName);
 
 			oWriter.Write("{");
-			if (oWorker.Enrichments != null)
+			if (worker.Enrichments != null)
 			{
 				oWriter.Write("\"Enrichments\":[");
 
@@ -332,9 +332,9 @@ namespace RevigoCSExample
 				double minFreq = 999999.0;
 				double maxFreq = 0.0;
 
-				for (int i = 0; i < oWorker.Enrichments.Count; i++)
+				for (int i = 0; i < worker.Enrichments.Count; i++)
 				{
-					double dFrequency = Math.Sqrt(oWorker.Enrichments[i].Value);
+					double dFrequency = Math.Sqrt(worker.Enrichments[i].Value);
 					if (dFrequency > 0.0)
 					{
 						minFreq = Math.Min(minFreq, dFrequency);
@@ -355,10 +355,10 @@ namespace RevigoCSExample
 				double range = maxFreq - minFreq;
 				bool bFirst = true;
 
-				for (int i = 0; i < oWorker.Enrichments.Count; i++)
+				for (int i = 0; i < worker.Enrichments.Count; i++)
 				{
-					string sWord = oWorker.Enrichments[i].Key.Replace("'", "");
-					double dFrequency = Math.Sqrt(oWorker.Enrichments[i].Value);
+					string sWord = worker.Enrichments[i].Key.Replace("'", "");
+					double dFrequency = Math.Sqrt(worker.Enrichments[i].Value);
 
 					if (dFrequency > 0.0)
 					{
@@ -373,9 +373,9 @@ namespace RevigoCSExample
 				oWriter.Write("]");
 			}
 
-			if (oWorker.Correlations != null)
+			if (worker.Correlations != null)
 			{
-				if (oWorker.Enrichments != null)
+				if (worker.Enrichments != null)
 					oWriter.Write(",");
 
 				oWriter.Write("\"Correlations\":[");
@@ -385,9 +385,9 @@ namespace RevigoCSExample
 				double RANGE_UNIT_SIZE = MAX_UNIT_SIZE - MIN_UNIT_SIZE;
 				double minFreq = 999999.0;
 				double maxFreq = 0.0;
-				for (int i = 0; i < oWorker.Correlations.Count; i++)
+				for (int i = 0; i < worker.Correlations.Count; i++)
 				{
-					double dFrequency = oWorker.Correlations[i].Value;
+					double dFrequency = worker.Correlations[i].Value;
 					if (dFrequency > 0.0)
 					{
 						minFreq = Math.Min(minFreq, dFrequency);
@@ -408,10 +408,10 @@ namespace RevigoCSExample
 				double range = maxFreq - minFreq;
 				bool bFirst = true;
 
-				for (int i = 0; i < oWorker.Correlations.Count; i++)
+				for (int i = 0; i < worker.Correlations.Count; i++)
 				{
-					string sWord = oWorker.Correlations[i].Key.Replace("'", "");
-					double dFrequency = oWorker.Correlations[i].Value;
+					string sWord = worker.Correlations[i].Key.Replace("'", "");
+					double dFrequency = worker.Correlations[i].Value;
 
 					if (dFrequency > 0.0)
 					{
