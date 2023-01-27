@@ -50,23 +50,17 @@ namespace RevigoCSExample
 			SemanticSimilarityScoreEnum eMeasure = SemanticSimilarityScoreEnum.SIMREL;
 			bool bRemoveObsolete = true;
 			Console.WriteLine("Loading Ontology");
-			DateTime oStart1 = DateTime.Now;
-			GeneOntology oOntology = new GeneOntology("C:\\Revigo\\Databases\\go.obo");
-			Console.WriteLine("Loaded in {0} seconds", (DateTime.Now - oStart1).TotalSeconds);
-
-			Console.WriteLine("Loading Ontology 2");
-			oStart1 = DateTime.Now;
-			GeneOntology oOntology2 = GeneOntology.Deserialize("C:\\Revigo\\Databases\\GeneOntology.xml.gz");
-			Console.WriteLine("Loaded in {0} seconds", (DateTime.Now - oStart1).TotalSeconds);
+			DateTime dtStart = DateTime.Now;
+			GeneOntology oOntology = GeneOntology.Deserialize("C:\\Revigo\\Databases\\Current\\GeneOntology.xml.gz");
+			Console.WriteLine("Loaded in {0} seconds", (DateTime.Now - dtStart).TotalSeconds);
 
 			Console.WriteLine("Loading Species Annotations");
-			SpeciesAnnotationsList oAnnotations = SpeciesAnnotationsList.Deserialize("C:\\Revigo\\Databases\\SpeciesAnnotations.xml");
+			dtStart = DateTime.Now;
+			SpeciesAnnotationsList oAnnotations = SpeciesAnnotationsList.Deserialize("C:\\Revigo\\Databases\\Current\\SpeciesAnnotations.xml.gz");
+			Console.WriteLine("Loaded in {0} seconds", (DateTime.Now - dtStart).TotalSeconds);
 			string sExample1 = null;
 			string sExample2 = null;
 			string sExample3 = null;
-
-			oOntology.Serialize("c:\\Revigo\\Databases\\GeneOntology.xml.gz");
-			oAnnotations.Serialize("c:\\Revigo\\Databases\\SpeciesAnnotations.xml.gz");
 
 			// read Example 1 from the file
 			using (StreamReader oReader = new StreamReader("Example1.csv"))
