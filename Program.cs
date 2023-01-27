@@ -50,9 +50,9 @@ namespace RevigoCSExample
 			SemanticSimilarityScoreEnum eMeasure = SemanticSimilarityScoreEnum.SIMREL;
 			bool bRemoveObsolete = true;
 			Console.WriteLine("Loading Ontology");
-			GeneOntology oOntology = new GeneOntology("go.obo");
+			GeneOntology oOntology = new GeneOntology("C:\\Revigo\\Databases\\go.obo");
 			Console.WriteLine("Loading Species Annotations");
-			SpeciesAnnotationsList oAnnotations = SpeciesAnnotationsList.Deserialize("SpeciesAnnotations.xml");
+			SpeciesAnnotationsList oAnnotations = SpeciesAnnotationsList.Deserialize("C:\\Revigo\\Databases\\SpeciesAnnotations.xml");
 			string sExample1 = null;
 			string sExample2 = null;
 			string sExample3 = null;
@@ -216,14 +216,7 @@ namespace RevigoCSExample
 				oWriter.Write("{0}\t", (oProperties.PC.Count > 1) ?
 					oProperties.PC[1].ToString(CultureInfo.InvariantCulture) : "null");
 
-				if (oProperties.Representative > 0)
-				{
-					oWriter.Write("{0}", oProperties.Representative);
-				}
-				else
-				{
-					oWriter.Write("null");
-				}
+				oWriter.Write("{0}", (oProperties.Representative > 0) ? oProperties.Representative.ToString() : "null");
 
 				oWriter.WriteLine();
 			}
@@ -428,6 +421,7 @@ namespace RevigoCSExample
 			oWriter.Write("}");
 
 			oWriter.Flush();
+			oWriter.Close();
 		}
 
 		private static void OWorker_OnFinish(object sender, EventArgs e)
