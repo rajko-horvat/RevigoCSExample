@@ -89,7 +89,7 @@ namespace RevigoCSExample
 				// Annotations for a given dataset
 				oAnnotations.GetByID(iSpeciesTaxon), 
 				// Timeout in minutes
-				20, 
+				new TimeSpan(0, 20, 0), 
 				// Job source
 				RequestSourceEnum.JubSubmitting,
 				// Dataset
@@ -98,11 +98,13 @@ namespace RevigoCSExample
 				dCutoff, eValueType, eMeasure, bRemoveObsolete);
 
 			// Create worker 2
-			RevigoWorker oWorker2 = new RevigoWorker(2, oOntology, oAnnotations.GetByID(9606), 20, RequestSourceEnum.JubSubmitting,
+			RevigoWorker oWorker2 = new RevigoWorker(2, oOntology, oAnnotations.GetByID(9606), new TimeSpan(0, 20, 0),
+				RequestSourceEnum.JubSubmitting,
 				sExample2, 0.9, eValueType, SemanticSimilarityScoreEnum.LIN, bRemoveObsolete);
 
 			// Create worker 3
-			RevigoWorker oWorker3 = new RevigoWorker(3, oOntology, oAnnotations.GetByID(iSpeciesTaxon), 20, RequestSourceEnum.JubSubmitting,
+			RevigoWorker oWorker3 = new RevigoWorker(3, oOntology, oAnnotations.GetByID(iSpeciesTaxon), new TimeSpan(0, 20, 0),
+				RequestSourceEnum.JubSubmitting,
 				sExample3, 0.4, eValueType, eMeasure, bRemoveObsolete);
 
 			// Workers will notify when the are finished processing the data
@@ -272,7 +274,7 @@ namespace RevigoCSExample
 				oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
 				if (oProperties.Representative > 0)
 				{
-					oWriter.Write("\"{0}\"", ontology.GetValueByKey(oProperties.Representative).Name);
+					oWriter.Write("\"{0}\"", ontology.Terms.GetValueByKey(oProperties.Representative).Name);
 				}
 				else
 				{
