@@ -91,7 +91,7 @@ namespace RevigoCSExample
 				// Timeout in minutes
 				new TimeSpan(0, 20, 0), 
 				// Job source
-				RequestSourceEnum.JubSubmitting,
+				RequestSourceEnum.JobSubmitting,
 				// Dataset
 				sExample1, 
 				// Job parameters
@@ -99,12 +99,12 @@ namespace RevigoCSExample
 
 			// Create worker 2
 			RevigoWorker oWorker2 = new RevigoWorker(2, oOntology, oAnnotations.GetByID(9606), new TimeSpan(0, 20, 0),
-				RequestSourceEnum.JubSubmitting,
+				RequestSourceEnum.JobSubmitting,
 				sExample2, 0.9, eValueType, SemanticSimilarityScoreEnum.LIN, bRemoveObsolete);
 
 			// Create worker 3
 			RevigoWorker oWorker3 = new RevigoWorker(3, oOntology, oAnnotations.GetByID(iSpeciesTaxon), new TimeSpan(0, 20, 0),
-				RequestSourceEnum.JubSubmitting,
+				RequestSourceEnum.JobSubmitting,
 				sExample3, 0.4, eValueType, eMeasure, bRemoveObsolete);
 
 			// Workers will notify when the are finished processing the data
