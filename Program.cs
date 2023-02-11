@@ -47,7 +47,7 @@ namespace RevigoCSExample
 			double dCutoff = 0.7;
 			ValueTypeEnum eValueType = ValueTypeEnum.PValue;
 			int iSpeciesTaxon = 0;
-			SemanticSimilarityScoreEnum eMeasure = SemanticSimilarityScoreEnum.SIMREL;
+			SemanticSimilarityEnum eMeasure = SemanticSimilarityEnum.SIMREL;
 			bool bRemoveObsolete = true;
 			Console.WriteLine("Loading Ontology");
 			DateTime dtStart = DateTime.Now;
@@ -100,7 +100,7 @@ namespace RevigoCSExample
 			// Create worker 2
 			RevigoWorker oWorker2 = new RevigoWorker(2, oOntology, oAnnotations.GetByID(9606), new TimeSpan(0, 20, 0),
 				RequestSourceEnum.JobSubmitting,
-				sExample2, 0.9, eValueType, SemanticSimilarityScoreEnum.LIN, bRemoveObsolete);
+				sExample2, 0.9, eValueType, SemanticSimilarityEnum.LIN, bRemoveObsolete);
 
 			// Create worker 3
 			RevigoWorker oWorker3 = new RevigoWorker(3, oOntology, oAnnotations.GetByID(iSpeciesTaxon), new TimeSpan(0, 20, 0),
