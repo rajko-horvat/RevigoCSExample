@@ -1,9 +1,11 @@
 ﻿## Repository description
 <p>This is the example CS project that illustrates how to use a REVIGO core library for your own projects.</p>
-<p>To run this example you need the RevigoCore library and a set of precompiled databases available 
-	<a href="http://revigo.irb.hr/Databases/GeneOntology.xml.gz" target="_blank">here</a> (Gene Ontology) and 
-	<a href="http://revigo.irb.hr/Databases/SpeciesAnnotations.xml.gz" target="_blank">here</a> (Species annotations), 
-	or build your databases with <a href="https://github.com/rajko-horvat/RevigoGenerateDatabases">RevigoGenerateDatabases</a> command line utility.</p>
+
+## How to compile this example
+<p>To run this example you need the compiled RevigoCore library and a set of precompiled databases:
+	<a href="http://revigo.irb.hr/Databases/GeneOntology.xml.gz" target="_blank">Gene Ontology</a> and 
+	<a href="http://revigo.irb.hr/Databases/SpeciesAnnotations.xml.gz" target="_blank">Species annotations</a>, 
+	or build your own databases with <a href="https://github.com/rajko-horvat/RevigoGenerateDatabases">RevigoGenerateDatabases</a> command line utility.</p>
 
 ## About REVIGO (REduce + VIsualize Gene Ontology) project
 <p>Outcomes of high-throughput biological experiments are typically interpreted by statistical testing
