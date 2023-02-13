@@ -308,7 +308,7 @@ namespace RevigoCSExample
 				oWriter.Write(visualizer.Terms[i].FormattedID);
 				for (int j = 0; j < visualizer.Terms.Length; j++)
 				{
-					oWriter.Write("\t{0}", visualizer.Matrix.Matrix[i, j].ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("\t{0}", visualizer.Matrix.GetValue(i, j).ToString(CultureInfo.InvariantCulture));
 				}
 				oWriter.WriteLine();
 			}
