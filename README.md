@@ -14,7 +14,7 @@
 	<li>git clone https://github.com/rajko-horvat/RevigoCore</li>
 	<li>git clone https://github.com/rajko-horvat/RevigoCSExample</li>
 	<li>dotnet build --configuration Release --os win-x64 RevigoCSExample.csproj (For Linux use --os linux. See <a href="https://learn.microsoft.com/en-us/dotnet/core/rid-catalog">list of OS RIDs</a> for --os option)</li>
-	<li>Run generated binary file (under RevigoCSExample/bin/net6.0/ and enjoy.</li>
+	<li>Run generated binary file (under RevigoCSExample/bin/net6.0/) and enjoy.</li>
 </ul></p>
 
 ## About REVIGO (REduce + VIsualize Gene Ontology) project
