@@ -58,9 +58,9 @@ namespace RevigoCSExample
 			dtStart = DateTime.Now;
 			SpeciesAnnotationsList oAnnotations = SpeciesAnnotationsList.Deserialize("C:\\Revigo\\Databases\\Current\\SpeciesAnnotations.xml.gz");
 			Console.WriteLine("Loaded in {0} seconds", (DateTime.Now - dtStart).TotalSeconds);
-			string sExample1 = null;
-			string sExample2 = null;
-			string sExample3 = null;
+			string sExample1;
+			string sExample2;
+			string sExample3;
 
 			// read Example 1 from the file
 			using (StreamReader oReader = new StreamReader("Example1.csv"))
@@ -83,33 +83,31 @@ namespace RevigoCSExample
 			// Create worker 1
 			RevigoWorker oWorker1 = new RevigoWorker(
 				// JobID
-				1, 
+				1,
 				// Ontology
-				oOntology, 
+				oOntology,
 				// Annotations for a given dataset
-				oAnnotations.GetByID(iSpeciesTaxon), 
+				oAnnotations.GetByID(iSpeciesTaxon),
 				// Timeout in minutes
-				new TimeSpan(0, 20, 0), 
+				new TimeSpan(0, 20, 0),
 				// Job source
 				RequestSourceEnum.JobSubmitting,
 				// Dataset
-				sExample1, 
+				sExample1,
 				// Job parameters
 				dCutoff, eValueType, eMeasure, bRemoveObsolete);
+			oWorker1.OnFinish += OWorker_OnFinish;
 
 			// Create worker 2
 			RevigoWorker oWorker2 = new RevigoWorker(2, oOntology, oAnnotations.GetByID(9606), new TimeSpan(0, 20, 0),
 				RequestSourceEnum.JobSubmitting,
 				sExample2, 0.9, eValueType, SemanticSimilarityEnum.LIN, bRemoveObsolete);
+			oWorker2.OnFinish += OWorker_OnFinish;
 
 			// Create worker 3
 			RevigoWorker oWorker3 = new RevigoWorker(3, oOntology, oAnnotations.GetByID(iSpeciesTaxon), new TimeSpan(0, 20, 0),
 				RequestSourceEnum.JobSubmitting,
 				sExample3, 0.4, eValueType, eMeasure, bRemoveObsolete);
-
-			// Workers will notify when the are finished processing the data
-			oWorker1.OnFinish += OWorker_OnFinish;
-			oWorker2.OnFinish += OWorker_OnFinish;
 			oWorker3.OnFinish += OWorker_OnFinish;
 
 			// Start Workers and wait for their completion
@@ -140,181 +138,196 @@ namespace RevigoCSExample
 			Console.ReadLine();
 		}
 
-		private static void ExportTable(GeneOntology ontology, RevigoWorker worker, TermListVisualizer visualizer, string fileName)
+		private static void ExportTable(GeneOntology ontology, RevigoWorker worker, TermListVisualizer? visualizer, string fileName)
 		{
-			StreamWriter oWriter = new StreamWriter(fileName);
-
-			GOTermList oTerms = new GOTermList(visualizer.Terms);
-			oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
-
-			oWriter.Write("TermID\tName\tValue\t");
-			for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
+			if (visualizer != null)
 			{
-				oWriter.Write("UserValue_{0}\t", c - 1);
-			}
-			oWriter.WriteLine("LogSize\tFrequency\tUniqueness\tDispensability\tRepresentative");
+				StreamWriter oWriter = new StreamWriter(fileName);
 
-			// print the data
-			for (int i = 0; i < oTerms.Count; i++)
-			{
-				GOTerm oTerm = oTerms[i];
-				GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
+				GOTermList oTerms = new GOTermList(visualizer.Terms);
+				oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
 
-				oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
-				oWriter.Write("\"{0}\"\t", oTerm.Name);
-				oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
-
+				oWriter.Write("TermID\tName\tValue\t");
 				for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 				{
-					oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("UserValue_{0}\t", c - 1);
 				}
+				oWriter.WriteLine("LogSize\tFrequency\tUniqueness\tDispensability\tRepresentative");
 
-				oWriter.Write("{0}\t",
-					oProperties.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
-				oWriter.Write("{0}\t",
-					(oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
-				oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
-				oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
-
-				if (oProperties.Representative > 0)
+				// print the data
+				for (int i = 0; i < oTerms.Count; i++)
 				{
-					oWriter.Write("{0}", oProperties.Representative);
-				}
-				else
-				{
-					oWriter.Write("null");
-				}
+					GOTerm oTerm = oTerms[i];
+					GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
 
-				oWriter.WriteLine();
+					oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
+					oWriter.Write("\"{0}\"\t", oTerm.Name);
+					oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
+
+					for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
+					{
+						oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
+					}
+
+					oWriter.Write("{0}\t",
+						oProperties.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t",
+						(oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
+
+					if (oProperties.Representative > 0)
+					{
+						oWriter.Write("{0}", oProperties.Representative);
+					}
+					else
+					{
+						oWriter.Write("null");
+					}
+
+					oWriter.WriteLine();
+				}
+				oWriter.Flush();
+				oWriter.Close();
 			}
-			oWriter.Flush();
-			oWriter.Close();
 		}
 
-		private static void ExportScatterplot(GeneOntology ontology, RevigoWorker worker, TermListVisualizer visualizer, string fileName)
+		private static void ExportScatterplot(GeneOntology ontology, RevigoWorker worker, TermListVisualizer? visualizer, string fileName)
 		{
-			StreamWriter oWriter = new StreamWriter(fileName);
-
-			GOTermList oTerms = new GOTermList(visualizer.Terms);
-			oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
-
-			oWriter.WriteLine("TermID\tName\tValue\tLogSize\tFrequency\tUniqueness\tDispensability\tPC_0\tPC_1\tRepresentative");
-
-			// print the data
-			for (int i = 0; i < oTerms.Count; i++)
+			if (visualizer != null)
 			{
-				GOTerm oTerm = oTerms[i];
-				GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
+				StreamWriter oWriter = new StreamWriter(fileName);
 
-				oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
-				oWriter.Write("\"{0}\"\t", oTerm.Name);
-				oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
+				GOTermList oTerms = new GOTermList(visualizer.Terms);
+				oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
 
-				oWriter.Write("{0}\t",
-					oProperties.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
-				oWriter.Write("{0}\t",
-					(oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
-				oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
-				oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
+				oWriter.WriteLine("TermID\tName\tValue\tLogSize\tFrequency\tUniqueness\tDispensability\tPC_0\tPC_1\tRepresentative");
 
-				// 2D
-				oWriter.Write("{0}\t", (oProperties.PC.Count > 0) ?
-					oProperties.PC[0].ToString(CultureInfo.InvariantCulture) : "null");
-				oWriter.Write("{0}\t", (oProperties.PC.Count > 1) ?
-					oProperties.PC[1].ToString(CultureInfo.InvariantCulture) : "null");
+				// print the data
+				for (int i = 0; i < oTerms.Count; i++)
+				{
+					GOTerm oTerm = oTerms[i];
+					GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
 
-				oWriter.Write("{0}", (oProperties.Representative > 0) ? oProperties.Representative.ToString() : "null");
+					oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
+					oWriter.Write("\"{0}\"\t", oTerm.Name);
+					oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
 
-				oWriter.WriteLine();
+					oWriter.Write("{0}\t",
+						oProperties.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t",
+						(oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
+
+					// 2D
+					oWriter.Write("{0}\t", (oProperties.PC.Count > 0) ?
+						oProperties.PC[0].ToString(CultureInfo.InvariantCulture) : "null");
+					oWriter.Write("{0}\t", (oProperties.PC.Count > 1) ?
+						oProperties.PC[1].ToString(CultureInfo.InvariantCulture) : "null");
+
+					oWriter.Write("{0}", (oProperties.Representative > 0) ? oProperties.Representative.ToString() : "null");
+
+					oWriter.WriteLine();
+				}
+				oWriter.Flush();
+				oWriter.Close();
 			}
-			oWriter.Flush();
-			oWriter.Close();
 		}
 
-		private static void ExportTreeMap(GeneOntology ontology, RevigoWorker worker, TermListVisualizer visualizer, string fileName)
+		private static void ExportTreeMap(GeneOntology ontology, RevigoWorker worker, TermListVisualizer? visualizer, string fileName)
 		{
-			StreamWriter oWriter = new StreamWriter(fileName);
-
-			GOTermList terms = new GOTermList(visualizer.Terms);
-			terms.FindClustersAndSortByThem(ontology, worker.AllProperties, 0.1);
-
-			oWriter.WriteLine("# WARNING - This exported Revigo data is only useful for the specific purpose of constructing a TreeMap visualization.");
-			oWriter.WriteLine("# Do not use this table as a general list of non-redundant GO categories, as it sets an extremely permissive ");
-			oWriter.WriteLine("# threshold to detect redundancies (c=0.10) and fill the 'representative' column, while normally c>=0.4 is recommended.");
-			oWriter.WriteLine("# To export a reduced-redundancy set of GO terms, go to the Scatterplot or Table tab, and export from there.");
-
-			oWriter.Write("TermID\tName\tFrequency\tValue\t");
-			for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
+			if (visualizer != null)
 			{
-				oWriter.Write("UserValue_{0}\t", c - 1);
-			}
-			oWriter.WriteLine("Uniqueness\tDispensability\tRepresentative");
+				StreamWriter oWriter = new StreamWriter(fileName);
 
-			// print the data
-			for (int i = 0; i < terms.Count; i++)
-			{
-				GOTerm curGOTerm = terms[i];
-				GOTermProperties oProperties = worker.AllProperties.GetValueByKey(curGOTerm.ID);
-				bool isTermEliminated = oProperties.Dispensability > worker.CutOff;
-				if (isTermEliminated)
-					continue; // will not output terms below the dispensability threshold at all
+				GOTermList terms = new GOTermList(visualizer.Terms);
+				terms.FindClustersAndSortByThem(ontology, worker.AllProperties, 0.1);
 
-				oWriter.Write("\"{0}\"\t", curGOTerm.FormattedID);
-				oWriter.Write("\"{0}\"\t", curGOTerm.Name);
-				oWriter.Write("{0}\t", (oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
+				oWriter.WriteLine("# WARNING - This exported Revigo data is only useful for the specific purpose of constructing a TreeMap visualization.");
+				oWriter.WriteLine("# Do not use this table as a general list of non-redundant GO categories, as it sets an extremely permissive ");
+				oWriter.WriteLine("# threshold to detect redundancies (c=0.10) and fill the 'representative' column, while normally c>=0.4 is recommended.");
+				oWriter.WriteLine("# To export a reduced-redundancy set of GO terms, go to the Scatterplot or Table tab, and export from there.");
 
-				oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
-
+				oWriter.Write("TermID\tName\tFrequency\tValue\t");
 				for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 				{
-					oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("UserValue_{0}\t", c - 1);
 				}
+				oWriter.WriteLine("Uniqueness\tDispensability\tRepresentative");
 
-				oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
-				oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
-				if (oProperties.Representative > 0)
+				// print the data
+				for (int i = 0; i < terms.Count; i++)
 				{
-					oWriter.Write("\"{0}\"", ontology.Terms.GetValueByKey(oProperties.Representative).Name);
+					GOTerm curGOTerm = terms[i];
+					GOTermProperties oProperties = worker.AllProperties.GetValueByKey(curGOTerm.ID);
+					bool isTermEliminated = oProperties.Dispensability > worker.CutOff;
+					if (isTermEliminated)
+						continue; // will not output terms below the dispensability threshold at all
+
+					oWriter.Write("\"{0}\"\t", curGOTerm.FormattedID);
+					oWriter.Write("\"{0}\"\t", curGOTerm.Name);
+					oWriter.Write("{0}\t", (oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
+
+					oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
+
+					for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
+					{
+						oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
+					}
+
+					oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
+					if (oProperties.Representative > 0)
+					{
+						oWriter.Write("\"{0}\"", ontology.Terms.GetValueByKey(oProperties.Representative).Name);
+					}
+					else
+					{
+						oWriter.Write("null");
+					}
+					oWriter.WriteLine();
 				}
-				else
-				{
-					oWriter.Write("null");
-				}
-				oWriter.WriteLine();
+				oWriter.Flush();
+				oWriter.Close();
 			}
-			oWriter.Flush();
-			oWriter.Close();
 		}
 
-		private static void ExportCytoscapeXGMML(TermListVisualizer visualizer, string fileName)
+		private static void ExportCytoscapeXGMML(TermListVisualizer? visualizer, string fileName)
 		{
-			StreamWriter oWriter = new StreamWriter(fileName);
-			visualizer.SimpleOntologram.GraphToXGMML(oWriter);
-			oWriter.Flush();
-			oWriter.Close();
+			if (visualizer != null && visualizer.SimpleOntologram != null)
+			{
+				StreamWriter oWriter = new StreamWriter(fileName);
+				visualizer.SimpleOntologram.GraphToXGMML(oWriter);
+				oWriter.Flush();
+				oWriter.Close();
+			}
 		}
 
-		private static void ExportSimMat(TermListVisualizer visualizer, string fileName)
+		private static void ExportSimMat(TermListVisualizer? visualizer, string fileName)
 		{
-			StreamWriter oWriter = new StreamWriter(fileName);
+			if (visualizer != null && visualizer.Matrix != null)
+			{
+				StreamWriter oWriter = new StreamWriter(fileName);
 
-			for (int i = 0; i < visualizer.Terms.Length; i++)
-			{
-				oWriter.Write("\t{0}", visualizer.Terms[i].FormattedID);
-			}
-			oWriter.WriteLine();
-			for (int i = 0; i < visualizer.Terms.Length; i++)
-			{
-				oWriter.Write(visualizer.Terms[i].FormattedID);
-				for (int j = 0; j < visualizer.Terms.Length; j++)
+				for (int i = 0; i < visualizer.Terms.Length; i++)
 				{
-					oWriter.Write("\t{0}", visualizer.Matrix.GetValue(i, j).ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("\t{0}", visualizer.Terms[i].FormattedID);
 				}
 				oWriter.WriteLine();
-			}
+				for (int i = 0; i < visualizer.Terms.Length; i++)
+				{
+					oWriter.Write(visualizer.Terms[i].FormattedID);
+					for (int j = 0; j < visualizer.Terms.Length; j++)
+					{
+						oWriter.Write("\t{0}", visualizer.Matrix.GetValue(i, j).ToString(CultureInfo.InvariantCulture));
+					}
+					oWriter.WriteLine();
+				}
 
-			oWriter.Flush();
-			oWriter.Close();
+				oWriter.Flush();
+				oWriter.Close();
+			}
 		}
 
 		private static void ExportWordClouds(RevigoWorker worker, string fileName)
@@ -431,11 +444,14 @@ namespace RevigoCSExample
 			oWriter.Close();
 		}
 
-		private static void OWorker_OnFinish(object sender, EventArgs e)
+		private static void OWorker_OnFinish(object? sender, EventArgs e)
 		{
-			RevigoWorker oWorker = sender as RevigoWorker;
+			if (sender != null)
+			{
+				RevigoWorker oWorker = (RevigoWorker)sender;
 
-			Console.WriteLine("Worker {0} has finished processing the data in {1} seconds.", oWorker.JobID, oWorker.ExecutingTime.TotalSeconds);
+				Console.WriteLine("Worker {0} has finished processing the data in {1} seconds.", oWorker.JobID, oWorker.ExecutingTime.TotalSeconds);
+			}
 		}
 	}
 }

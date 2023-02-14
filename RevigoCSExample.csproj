@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>disable</Nullable>
+    <Nullable>enable</Nullable>
     <Title>REVIGO (REduce + VIsualize Gene Ontology) C# usage example</Title>
     <Copyright>Copyright (c) 2011-2023, Ruđer Bošković Institite</Copyright>
     <PackageProjectUrl>https://github.com/rajko-horvat/RevigoCSExample</PackageProjectUrl>
