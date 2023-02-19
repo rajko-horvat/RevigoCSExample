@@ -1,5 +1,6 @@
 ﻿## Repository description
 <p>This is the example CS project that illustrates how to use a REVIGO core library for your own projects.</p>
+<p>Since a lot of changes had to be made for .NET Core. Official release with binaries is planned for mid February 2023</p>
 
 ## How to compile and run this example
 <p>To run this example you need the compiled RevigoCore library and a set of precompiled databases:

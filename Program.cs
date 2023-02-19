@@ -4,8 +4,8 @@ using System.IO;
 using System.Threading;
 using IRB.Revigo;
 using IRB.Revigo.Core;
-using IRB.Revigo.Databases;
-using IRB.Revigo.Worker;
+using IRB.Revigo.Core.Databases;
+using IRB.Revigo.Core.Worker;
 
 namespace RevigoCSExample
 {
@@ -47,7 +47,7 @@ namespace RevigoCSExample
 			double dCutoff = 0.7;
 			ValueTypeEnum eValueType = ValueTypeEnum.PValue;
 			int iSpeciesTaxon = 0;
-			SemanticSimilarityEnum eMeasure = SemanticSimilarityEnum.SIMREL;
+			SemanticSimilarityTypeEnum eMeasure = SemanticSimilarityTypeEnum.SIMREL;
 			bool bRemoveObsolete = true;
 			Console.WriteLine("Loading Ontology");
 			DateTime dtStart = DateTime.Now;
@@ -56,7 +56,7 @@ namespace RevigoCSExample
 
 			Console.WriteLine("Loading Species Annotations");
 			dtStart = DateTime.Now;
-			SpeciesAnnotationsList oAnnotations = SpeciesAnnotationsList.Deserialize("C:\\Revigo\\Databases\\Current\\SpeciesAnnotations.xml.gz");
+			SpeciesAnnotationList oAnnotations = SpeciesAnnotationList.Deserialize("C:\\Revigo\\Databases\\Current\\SpeciesAnnotations.xml.gz");
 			Console.WriteLine("Loaded in {0} seconds", (DateTime.Now - dtStart).TotalSeconds);
 			string sExample1;
 			string sExample2;
@@ -80,6 +80,13 @@ namespace RevigoCSExample
 				sExample3 = oReader.ReadToEnd();
 			}
 
+			SpeciesAnnotations? annotations1 = oAnnotations.GetByID(iSpeciesTaxon);
+			SpeciesAnnotations? annotations2 = oAnnotations.GetByID(9606);
+			SpeciesAnnotations? annotations3 = oAnnotations.GetByID(iSpeciesTaxon);
+
+			if (annotations1 == null || annotations2 == null || annotations3 == null)
+				throw new Exception("Species annotations not found");
+
 			// Create worker 1
 			RevigoWorker oWorker1 = new RevigoWorker(
 				// JobID
@@ -87,7 +94,7 @@ namespace RevigoCSExample
 				// Ontology
 				oOntology,
 				// Annotations for a given dataset
-				oAnnotations.GetByID(iSpeciesTaxon),
+				annotations1,
 				// Timeout in minutes
 				new TimeSpan(0, 20, 0),
 				// Job source
@@ -99,13 +106,13 @@ namespace RevigoCSExample
 			oWorker1.OnFinish += OWorker_OnFinish;
 
 			// Create worker 2
-			RevigoWorker oWorker2 = new RevigoWorker(2, oOntology, oAnnotations.GetByID(9606), new TimeSpan(0, 20, 0),
+			RevigoWorker oWorker2 = new RevigoWorker(2, oOntology, annotations2, new TimeSpan(0, 20, 0),
 				RequestSourceEnum.JobSubmitting,
-				sExample2, 0.9, eValueType, SemanticSimilarityEnum.LIN, bRemoveObsolete);
+				sExample2, 0.9, eValueType, SemanticSimilarityTypeEnum.LIN, bRemoveObsolete);
 			oWorker2.OnFinish += OWorker_OnFinish;
 
 			// Create worker 3
-			RevigoWorker oWorker3 = new RevigoWorker(3, oOntology, oAnnotations.GetByID(iSpeciesTaxon), new TimeSpan(0, 20, 0),
+			RevigoWorker oWorker3 = new RevigoWorker(3, oOntology, annotations3, new TimeSpan(0, 20, 0),
 				RequestSourceEnum.JobSubmitting,
 				sExample3, 0.4, eValueType, eMeasure, bRemoveObsolete);
 			oWorker3.OnFinish += OWorker_OnFinish;
@@ -138,14 +145,13 @@ namespace RevigoCSExample
 			Console.ReadLine();
 		}
 
-		private static void ExportTable(GeneOntology ontology, RevigoWorker worker, TermListVisualizer? visualizer, string fileName)
+		private static void ExportTable(GeneOntology ontology, RevigoWorker worker, NamespaceVisualizer visualizer, string fileName)
 		{
 			if (visualizer != null)
 			{
 				StreamWriter oWriter = new StreamWriter(fileName);
 
-				GOTermList oTerms = new GOTermList(visualizer.Terms);
-				oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
+				RevigoTermCollection oTerms = visualizer.Terms.FindClustersAndSortByThem(ontology, worker.CutOff);
 
 				oWriter.Write("TermID\tName\tValue\t");
 				for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
@@ -157,28 +163,27 @@ namespace RevigoCSExample
 				// print the data
 				for (int i = 0; i < oTerms.Count; i++)
 				{
-					GOTerm oTerm = oTerms[i];
-					GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
+					RevigoTerm term = oTerms[i];
 
-					oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
-					oWriter.Write("\"{0}\"\t", oTerm.Name);
-					oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("\"{0}\"\t", term.GOTerm.FormattedID);
+					oWriter.Write("\"{0}\"\t", term.GOTerm.Name);
+					oWriter.Write("{0}\t", term.Value.ToString(CultureInfo.InvariantCulture));
 
 					for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 					{
-						oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
+						oWriter.Write("{0}\t", term.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
 					}
 
 					oWriter.Write("{0}\t",
-						oProperties.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
+						term.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
 					oWriter.Write("{0}\t",
-						(oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
-					oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
-					oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
+						(term.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", term.Uniqueness.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", term.Dispensability.ToString(CultureInfo.InvariantCulture));
 
-					if (oProperties.Representative > 0)
+					if (term.RepresentativeID > 0)
 					{
-						oWriter.Write("{0}", oProperties.Representative);
+						oWriter.Write("{0}", term.RepresentativeID);
 					}
 					else
 					{
@@ -192,41 +197,39 @@ namespace RevigoCSExample
 			}
 		}
 
-		private static void ExportScatterplot(GeneOntology ontology, RevigoWorker worker, TermListVisualizer? visualizer, string fileName)
+		private static void ExportScatterplot(GeneOntology ontology, RevigoWorker worker, NamespaceVisualizer visualizer, string fileName)
 		{
-			if (visualizer != null)
+			if (!visualizer.IsEmpty)
 			{
 				StreamWriter oWriter = new StreamWriter(fileName);
 
-				GOTermList oTerms = new GOTermList(visualizer.Terms);
-				oTerms.FindClustersAndSortByThem(ontology, worker.AllProperties, worker.CutOff);
+				RevigoTermCollection oTerms = visualizer.Terms.FindClustersAndSortByThem(ontology, worker.CutOff);
 
 				oWriter.WriteLine("TermID\tName\tValue\tLogSize\tFrequency\tUniqueness\tDispensability\tPC_0\tPC_1\tRepresentative");
 
 				// print the data
 				for (int i = 0; i < oTerms.Count; i++)
 				{
-					GOTerm oTerm = oTerms[i];
-					GOTermProperties oProperties = worker.AllProperties.GetValueByKey(oTerm.ID);
+					RevigoTerm term = oTerms[i];
 
-					oWriter.Write("\"{0}\"\t", oTerm.FormattedID);
-					oWriter.Write("\"{0}\"\t", oTerm.Name);
-					oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("\"{0}\"\t", term.GOTerm.FormattedID);
+					oWriter.Write("\"{0}\"\t", term.GOTerm.Name);
+					oWriter.Write("{0}\t", term.Value.ToString(CultureInfo.InvariantCulture));
 
 					oWriter.Write("{0}\t",
-						oProperties.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
+						term.LogAnnotationSize.ToString(CultureInfo.InvariantCulture));
 					oWriter.Write("{0}\t",
-						(oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
-					oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
-					oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
+						(term.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", term.Uniqueness.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", term.Dispensability.ToString(CultureInfo.InvariantCulture));
 
 					// 2D
-					oWriter.Write("{0}\t", (oProperties.PC.Count > 0) ?
-						oProperties.PC[0].ToString(CultureInfo.InvariantCulture) : "null");
-					oWriter.Write("{0}\t", (oProperties.PC.Count > 1) ?
-						oProperties.PC[1].ToString(CultureInfo.InvariantCulture) : "null");
+					oWriter.Write("{0}\t", (term.PC.Count > 0) ?
+						term.PC[0].ToString(CultureInfo.InvariantCulture) : "null");
+					oWriter.Write("{0}\t", (term.PC.Count > 1) ?
+						term.PC[1].ToString(CultureInfo.InvariantCulture) : "null");
 
-					oWriter.Write("{0}", (oProperties.Representative > 0) ? oProperties.Representative.ToString() : "null");
+					oWriter.Write("{0}", (term.RepresentativeID > 0) ? term.RepresentativeID.ToString() : "null");
 
 					oWriter.WriteLine();
 				}
@@ -235,14 +238,13 @@ namespace RevigoCSExample
 			}
 		}
 
-		private static void ExportTreeMap(GeneOntology ontology, RevigoWorker worker, TermListVisualizer? visualizer, string fileName)
+		private static void ExportTreeMap(GeneOntology ontology, RevigoWorker worker, NamespaceVisualizer visualizer, string fileName)
 		{
-			if (visualizer != null)
+			if (!visualizer.IsEmpty)
 			{
 				StreamWriter oWriter = new StreamWriter(fileName);
 
-				GOTermList terms = new GOTermList(visualizer.Terms);
-				terms.FindClustersAndSortByThem(ontology, worker.AllProperties, 0.1);
+				RevigoTermCollection terms = visualizer.Terms.FindClustersAndSortByThem(ontology, 0.1);
 
 				oWriter.WriteLine("# WARNING - This exported Revigo data is only useful for the specific purpose of constructing a TreeMap visualization.");
 				oWriter.WriteLine("# Do not use this table as a general list of non-redundant GO categories, as it sets an extremely permissive ");
@@ -259,28 +261,27 @@ namespace RevigoCSExample
 				// print the data
 				for (int i = 0; i < terms.Count; i++)
 				{
-					GOTerm curGOTerm = terms[i];
-					GOTermProperties oProperties = worker.AllProperties.GetValueByKey(curGOTerm.ID);
-					bool isTermEliminated = oProperties.Dispensability > worker.CutOff;
+					RevigoTerm term = terms[i];
+					bool isTermEliminated = term.Dispensability > worker.CutOff;
 					if (isTermEliminated)
 						continue; // will not output terms below the dispensability threshold at all
 
-					oWriter.Write("\"{0}\"\t", curGOTerm.FormattedID);
-					oWriter.Write("\"{0}\"\t", curGOTerm.Name);
-					oWriter.Write("{0}\t", (oProperties.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("\"{0}\"\t", term.GOTerm.FormattedID);
+					oWriter.Write("\"{0}\"\t", term.GOTerm.Name);
+					oWriter.Write("{0}\t", (term.AnnotationFrequency * 100.0).ToString(CultureInfo.InvariantCulture));
 
-					oWriter.Write("{0}\t", oProperties.Value.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", term.Value.ToString(CultureInfo.InvariantCulture));
 
 					for (int c = 1; c < worker.MinNumColsPerGoTerm; c++)
 					{
-						oWriter.Write("{0}\t", oProperties.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
+						oWriter.Write("{0}\t", term.UserValues[c - 1].ToString(CultureInfo.InvariantCulture));
 					}
 
-					oWriter.Write("{0}\t", oProperties.Uniqueness.ToString(CultureInfo.InvariantCulture));
-					oWriter.Write("{0}\t", oProperties.Dispensability.ToString(CultureInfo.InvariantCulture));
-					if (oProperties.Representative > 0)
+					oWriter.Write("{0}\t", term.Uniqueness.ToString(CultureInfo.InvariantCulture));
+					oWriter.Write("{0}\t", term.Dispensability.ToString(CultureInfo.InvariantCulture));
+					if (term.RepresentativeID > 0)
 					{
-						oWriter.Write("\"{0}\"", ontology.Terms.GetValueByKey(oProperties.Representative).Name);
+						oWriter.Write("\"{0}\"", ontology.Terms.GetValueByKey(term.RepresentativeID).Name);
 					}
 					else
 					{
@@ -293,9 +294,9 @@ namespace RevigoCSExample
 			}
 		}
 
-		private static void ExportCytoscapeXGMML(TermListVisualizer? visualizer, string fileName)
+		private static void ExportCytoscapeXGMML(NamespaceVisualizer visualizer, string fileName)
 		{
-			if (visualizer != null && visualizer.SimpleOntologram != null)
+			if (!visualizer.IsEmpty && visualizer.SimpleOntologram != null)
 			{
 				StreamWriter oWriter = new StreamWriter(fileName);
 				visualizer.SimpleOntologram.GraphToXGMML(oWriter);
@@ -304,23 +305,23 @@ namespace RevigoCSExample
 			}
 		}
 
-		private static void ExportSimMat(TermListVisualizer? visualizer, string fileName)
+		private static void ExportSimMat(NamespaceVisualizer visualizer, string fileName)
 		{
-			if (visualizer != null && visualizer.Matrix != null)
+			if (!visualizer.IsEmpty && visualizer.Matrix != null)
 			{
 				StreamWriter oWriter = new StreamWriter(fileName);
 
-				for (int i = 0; i < visualizer.Terms.Length; i++)
+				for (int i = 0; i < visualizer.Terms.Count; i++)
 				{
-					oWriter.Write("\t{0}", visualizer.Terms[i].FormattedID);
+					oWriter.Write("\t{0}", visualizer.Terms[i].GOTerm.FormattedID);
 				}
 				oWriter.WriteLine();
-				for (int i = 0; i < visualizer.Terms.Length; i++)
+				for (int i = 0; i < visualizer.Terms.Count; i++)
 				{
-					oWriter.Write(visualizer.Terms[i].FormattedID);
-					for (int j = 0; j < visualizer.Terms.Length; j++)
+					oWriter.Write(visualizer.Terms[i].GOTerm.FormattedID);
+					for (int j = 0; j < visualizer.Terms.Count; j++)
 					{
-						oWriter.Write("\t{0}", visualizer.Matrix.GetValue(i, j).ToString(CultureInfo.InvariantCulture));
+						oWriter.Write("\t{0}", visualizer.Matrix.GetSimilarity(i, j).ToString(CultureInfo.InvariantCulture));
 					}
 					oWriter.WriteLine();
 				}
@@ -335,7 +336,7 @@ namespace RevigoCSExample
 			StreamWriter oWriter = new StreamWriter(fileName);
 
 			oWriter.Write("{");
-			if (worker.Enrichments != null)
+			if (worker.Enrichments.Count > 0)
 			{
 				oWriter.Write("\"Enrichments\":[");
 
@@ -386,7 +387,7 @@ namespace RevigoCSExample
 				oWriter.Write("]");
 			}
 
-			if (worker.Correlations != null)
+			if (worker.Correlations.Count > 0)
 			{
 				if (worker.Enrichments != null)
 					oWriter.Write(",");
