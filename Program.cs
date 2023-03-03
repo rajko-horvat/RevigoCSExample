@@ -16,7 +16,7 @@ namespace RevigoCSExample
 	/// set of database files available at: http://revigo.irb.hr/RevigoDatabases.zip
 	/// 
 	/// Authors:
-	///		Rajko Horvat (rhorvat at irb.hr)
+	///		Rajko Horvat (https://github.com/rajko-horvat)
 	///	
 	/// License:
 	/// 	MIT License
